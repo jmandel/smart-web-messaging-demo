@@ -1,0 +1,12 @@
+body {
+  font-family: Sans serif;
+}
+
+iframe {
+  width: 100%;
+  background: lightsteelblue;
+}
+
+.closing {
+  background: #111166;
+}
