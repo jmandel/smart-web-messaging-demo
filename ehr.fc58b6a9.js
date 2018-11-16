@@ -31071,41 +31071,42 @@ function _default(selfWindow, targetWindow, targetWindowOrigin) {
       return;
     }
 
-    if (!event.data.messageId || !event.data.body) {
+    if (!event.data.messageId) {
       return;
     }
 
     if (event.data.responseToMessageId) {
       var handler = outboundMessages[event.data.responseToMessageId];
-      handler.resolve(event.data.body);
+      handler.resolve(event.data.payload);
       delete outboundMessages[event.data.responseToMessageId];
     } else {
       new Promise(function (resolve, reject) {
         incoming.next({
-          body: event.data.body,
+          message: event.data,
           resolve: resolve,
           reject: reject
         });
-      }).then(function (resolveBody) {
-        sendBody(resolveBody, event.data.messageId);
+      }).then(function (payload) {
+        sendMessage({
+          payload: payload
+        }, event.data.messageId);
       });
     }
   });
 
-  var send = function send(topic, body, responseToMessageId) {
-    return sendBody({
+  var send = function send(topic, payload, responseToMessageId) {
+    return sendMessage({
       messageType: topic,
-      payload: _objectSpread({}, body)
+      payload: payload
     }, responseToMessageId);
   };
 
-  var sendBody = function sendBody(body, responseToMessageId) {
+  var sendMessage = function sendMessage(message, responseToMessageId) {
     var uuid = (0, _v.default)();
-    targetWindow.postMessage({
+    targetWindow.postMessage(_objectSpread({}, message, {
       'messageId': uuid,
-      'responseToMessageId': responseToMessageId,
-      'body': body
-    }, targetWindowOrigin);
+      'responseToMessageId': responseToMessageId
+    }), targetWindowOrigin);
 
     if (responseToMessageId) {
       return;
@@ -31120,17 +31121,17 @@ function _default(selfWindow, targetWindow, targetWindowOrigin) {
   };
 
   incoming.subscribe(function (args) {
-    var body = args.body,
+    var message = args.message,
         resolve = args.resolve,
         reject = args.reject;
 
-    if (body.messageType === 'status.ping') {
+    if (message.messageType === 'status.ping') {
       resolve("pong");
     }
   });
   return {
     send: send,
-    sendBody: sendBody,
+    sendMessage: sendMessage,
     incoming: incoming
   };
 }
@@ -31183,11 +31184,11 @@ function (_React$Component) {
       var messaging = (0, _common.default)(window, appIframe.contentWindow, this.props.origin);
       var that = this;
       messaging.incoming.subscribe(function (_ref) {
-        var body = _ref.body,
+        var message = _ref.message,
             resolve = _ref.resolve,
             reject = _ref.reject;
 
-        if (body.messageType == 'ui.done') {
+        if (message.messageType == 'ui.done') {
           resolve({
             success: true,
             details: 'okay, closing you in 2s!'
@@ -31195,7 +31196,7 @@ function (_React$Component) {
           setTimeout(function () {
             that.setState({
               appDone: true,
-              q: body.payload.activityParameters.webQuery
+              q: message.payload.activityParameters.webQuery
             });
           }, 2000);
         }
@@ -31249,7 +31250,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42265" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "43265" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
