@@ -9,7 +9,6 @@ const accessTokenResponse = {
 
 const ehrWindow = window.parent || window.opener
 const ehrWindowOrigin = accessTokenResponse.smart_messaging_origin
-
 const messaging = messagingBuilder(window, ehrWindow, ehrWindowOrigin)
 
 messaging
