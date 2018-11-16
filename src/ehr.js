@@ -9,7 +9,6 @@ class EmbeddedApp extends React.Component {
   componentDidMount() {
         const appIframe = this.refs.appIframe
         const messaging = messagingBuilder(window, appIframe.contentWindow, this.props.origin)
-        const that = this
 
         messaging.incoming.subscribe(({message, resolve, reject})=>{
           if (message.messageType == 'ui.done') {
@@ -18,8 +17,8 @@ class EmbeddedApp extends React.Component {
               details: 'okay, closing you in 2s!'
             })
 
-            setTimeout(function(){
-                that.setState({
+            setTimeout(()=>{
+                this.setState({
                   appDone: true,
                   q: message.payload.activityParameters.webQuery})
               }, 2000)
