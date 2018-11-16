@@ -10,32 +10,32 @@ export default function (selfWindow, targetWindow, targetWindowOrigin) {
         if (event.origin !== targetWindowOrigin) {
             return
         }
-        if (!event.data.messageId || !event.data.body) {
+        if (!event.data.messageId) {
             return
         }
         if (event.data.responseToMessageId) {
             const handler = outboundMessages[event.data.responseToMessageId]
-            handler.resolve(event.data.body)
+            handler.resolve(event.data.payload)
             delete outboundMessages[event.data.responseToMessageId]
         } else {
             new Promise((resolve, reject) => {
-                incoming.next({body: event.data.body, resolve, reject})
-            }).then((resolveBody) => {
-                sendBody(resolveBody, event.data.messageId)
+                incoming.next({message: event.data, resolve, reject})
+            }).then((payload) => {
+                sendMessage({payload}, event.data.messageId)
             })
         }
     })
 
-    const send = function (topic, body, responseToMessageId) {
-        return sendBody({messageType: topic, payload: {...body}}, responseToMessageId)
+    const send = function (topic, payload, responseToMessageId) {
+        return sendMessage({messageType: topic, payload}, responseToMessageId)
     }
 
-    const sendBody = function (body, responseToMessageId) {
+    const sendMessage = function (message, responseToMessageId) {
         const uuid = uuid4();
         targetWindow.postMessage({
+            ...message,
             'messageId': uuid,
-            'responseToMessageId': responseToMessageId,
-            'body': body
+            'responseToMessageId': responseToMessageId
         }, targetWindowOrigin)
         if (responseToMessageId) {
             return;
@@ -46,11 +46,11 @@ export default function (selfWindow, targetWindow, targetWindowOrigin) {
     }
 
     incoming.subscribe((args)=>{
-        const {body, resolve, reject} = args
-        if(body.messageType === 'status.ping'){
+        const {message, resolve, reject} = args
+        if(message.messageType === 'status.ping'){
             resolve("pong")
         }
     })
 
-    return { send, sendBody, incoming }
+    return { send, sendMessage, incoming }
 }
